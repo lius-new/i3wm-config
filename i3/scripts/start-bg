@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+import os
+import random
+import re
+
+import requests
+from lxml import etree
+
+
+def spider(url):
+    """
+    爬取页面
+    """
+    headers = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36'}
+    resp = requests.get(url,headers=headers)
+
+    if resp.status_code != 200:
+        print("爬取失败")
+        return
+    return resp
+
+def spider_step_one(resp):
+    """
+    获取首页源码并解析
+    """
+    xpath = etree.HTML(resp.text)
+
+    url_res = []
+    lis = xpath.xpath("//section[@class='thumb-listing-page']/ul/li")
+
+    # 图片中有些尺寸不是目标尺寸 过滤下
+    for li in lis:
+        size_info = li.xpath(".//span[@class='wall-res']/text()")
+        if len(size_info) > 0:
+            w,h = [int(i) for i in size_info[0].split(' x ')]
+            if w < h:
+                continue
+            else:
+                url_ = li.xpath('.//a[@class="preview"]/@href')
+                if len(url_) == 1:
+                    url_res.append(url_[0])
+
+    if len(url_res) > 0:
+        return True,random.choice(url_res)
+    else:
+        return False,random.choice(url_res)
+
+def spider_step_two(resp):
+    """
+    解析图片链接
+    """
+    xpath = etree.HTML(resp.text)
+    url_res = xpath.xpath('//img[@id="wallpaper"]/@src')
+
+    if len(url_res) != 1:
+        print("不明链接混入")
+        return
+    return url_res[0]
+
+def save_img(content,name):
+    path = os.path.join('/home/lius/pictures/bg-start-random/',name)
+    with open(path, 'wb') as file:
+        file.write(content)
+    return path
+
+def random_img_url():
+    base_url = 'https://wallhaven.cc/hot?page=1'
+
+    resp = spider(base_url)
+
+    if resp is None:
+        print("起始页面失败")
+        return
+    token,img_url_after = spider_step_one(resp)
+
+    if not token:
+        print("解析起始页面失败")
+        return
+
+    resp = spider(img_url_after)
+        
+    url = spider_step_two(resp)
+
+    if url is None:
+        return
+
+    img = spider(url).content
+    name = url.split("/")[-1]
+    path = save_img(img,name)
+    return path
+
+def change_bg(path):
+    cmd = 'feh --bg-fill ' + path
+    # print(cmd)
+    os.system(cmd)
+
+def main():
+    path = random_img_url()
+    change_bg(path)
+
+if __name__ == "__main__":
+    main()

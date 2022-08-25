@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+
+#amixer -D pulse sset Master 5%-
+#
+#v1=$(amixer -D pulse sget Master)
+#volume=`echo ${v1:0-10:10} | grep -oP '\[\d*\%\]' | xargs echo | sed 's/[^0-9]//g'`
+#
+#dunstify -a "changevolume" -u low -r "9993" -h int:value:"$volume" -i /usr/share/icons/Adwaita/24x24/status/audio-volume-high-rtl-symbolic.symbolic.png "Volume: ${volume}%" -t 2000
+
+changeVolume(){
+    v1=$(amixer -D pulse sget Master)
+    volume=`echo ${v1:0-10:10} | grep -oP '\[\d*\%\]' | xargs echo | sed 's/[^0-9]//g'`
+
+    dunstify -a "changevolume" -u low -r "9993" -h int:value:"$volume" -i /usr/share/icons/Adwaita/24x24/status/audio-volume-high-symbolic.symbolic.png "Volume: ${volume}%" -t 2000
+}
+
+amixer -D pulse sset Master 5%- >> /dev/null
+changeVolume

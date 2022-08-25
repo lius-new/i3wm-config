@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# https://www.youtube.com/watch?v=XWlbaERuDP4
+
+
+changeVolume(){
+    v1=$(amixer -D pulse sget Master)
+    volume=`echo ${v1:0-10:10} | grep -oP '\[\d*\%\]' | xargs echo | sed 's/[^0-9]//g'`
+
+    dunstify -i /usr/share/icons/Adwaita/24x24/status/audio-volume-muted-symbolic-rtl.symbolic.png -a "changevolume" -t 2000 -r 9993 -u low "Muted"
+}
+
+amixer sset Master toggle >> /dev/null
+changeVolume
